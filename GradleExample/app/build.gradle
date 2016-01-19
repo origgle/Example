@@ -1,0 +1,108 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
+
+    defaultConfig {
+        applicationId "com.origgle.example"
+        minSdkVersion 8
+        targetSdkVersion 22
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    android.applicationVariants.all { variant ->
+        //重命名APK
+        variant.outputs.each { output ->
+            if (output.outputFile.name.endsWith('.apk')) {
+                File unaligned = output.packageApplication.outputFile;
+                if (!unaligned.getName().equalsIgnoreCase(output.outputFile.getName())) {
+                    output.outputFile = new File(output.outputFile.parent, "gradle_${variant.versionCode}.apk")
+                }
+            }
+        }
+
+        //更新AndroidManifest.xml文件
+        variant.outputs.each { output ->
+            output.processManifest.manifestOutputFile.delete()
+            output.processManifest.doLast {
+                def manifestFile = output.processManifest.manifestOutputFile
+                def updatedContent = manifestFile.getText('UTF-8').replaceAll("map_value", "123")
+                manifestFile.write(updatedContent, 'UTF-8')
+            }
+        }
+
+        //删除UnalignedAPK
+        variant.assemble.doLast {
+            variant.outputs.each { output ->
+                File unaligned = output.packageApplication.outputFile;
+                if (!unaligned.getName().equalsIgnoreCase(output.outputFile.getName())) {
+                    unaligned.delete()
+                }
+            }
+        }
+
+        variant.assemble.doFirst {
+            println "### assemble.doFirst"
+        }
+
+        variant.assemble.doLast {
+            println "### assemble.doLast"
+        }
+
+        variant.javaCompile.doLast {
+            println "### javaCompile.doLast"
+        }
+
+        variant.mergeResources.doLast {
+            println "### mergeResources.doLast"
+        }
+
+        variant.mergeAssets.doLast {
+            println "### mergeAssets.doLast"
+        }
+
+        variant.dex.doLast {
+            println "### dex.doLast"
+        }
+
+        variant.outputs.each { output ->
+            output.processManifest.doLast {
+                println "### processManifest.doLast"
+
+                project.ext.dirName = variant.dirName;
+                tasks.helloTask.execute()
+
+            }
+
+            output.processResources.doLast {
+                println "### processResources.doLast"
+            }
+        }
+    }
+}
+
+project.ext {
+    dirName = "release";
+}
+
+task helloTask << {
+    println "### helloTask => " + project.ext.dirName;
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}
