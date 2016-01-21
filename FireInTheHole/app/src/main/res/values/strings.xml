@@ -1,5 +1,0 @@
-<resources>
-    <string name="app_name">HelloDemo</string>
-
-    <string name="label_data">UDP数据</string>
-</resources>
